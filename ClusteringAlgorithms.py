@@ -33,6 +33,7 @@ class KMeans(Clustering):
 			if(changes <= self.stop_threshold):
 				return self.k_clusters
 		return self.k_clusters
+
 	def update(self):
 		'''
 		Update both centers and point classes
@@ -44,7 +45,7 @@ class KMeans(Clustering):
 		for idx, point in enumerate(self.datapoints):
 			distances = [distance(point, center_k) for center_k in self.centers]
 			# print(distances)
-			self.k_clusters[idx] = np.argmax( distances )
+			self.k_clusters[idx] = np.argmin( distances )
 		# 2. Update K centers
 		last_centers = self.centers
 		counts = np.zeros((self.k))
@@ -70,4 +71,43 @@ class KMeans(Clustering):
 		else:
 			print('Not performed yet')
 
+	def in_animation(self, datapoints, anime_start_delay = 3, alpha = 0.52):
+		import matplotlib.animation as animation
+		self.datapoints = datapoints
+		self.N, self.D = datapoints.shape
+		self.k_clusters = [None] * self.N
+		self.anime_start_delay = anime_start_delay
+		plt.ion()
+		self.anime_fig, self.anime_ax = plt.subplots()
+		self.anime_scatter = None
+		self.anime_alpha = alpha
+		self.anime = animation.FuncAnimation(self.anime_fig, self.animation_update, \
+											 frames=np.arange(self.maxiter + anime_start_delay), interval = 532, \
+											 init_func = self.animation_init, blit = True, repeat = True)
+		plt.show()
+
+	def animation_init(self):
+		# randomly choose k points as initial centers
+		init_centers_idx = np.random.choice(self.N, self.k, replace=False)
+		self.centers = [self.datapoints[ck] for ck in init_centers_idx]
+		class_colors = np.random.rand(self.k, 3)
+		init_solid_colors = np.hstack( (class_colors, np.ones((self.k,1))) )
+		self.cluster_colors = np.hstack( (class_colors, np.ones((self.k,1)) * self.anime_alpha) )
+		unassigned = np.array([0.5, 0.5, 0.5, self.anime_alpha])
+
+		colors = np.ones((self.N, 4)) * unassigned
+		for color_idx, center_idx in enumerate(init_centers_idx):
+			colors[center_idx] = init_solid_colors[color_idx]
+		if self.anime_scatter is not None:
+			self.anime_scatter.remove()
+		self.anime_scatter = self.anime_ax.scatter(self.datapoints[:, 0], self.datapoints[:, 1], c = colors)
+		return self.anime_scatter,
+
+	def animation_update(self, ith_frame):
+		if ith_frame > self.anime_start_delay:
+			self.update()
+			new_color = np.array([self.cluster_colors[k] for k in self.k_clusters])
+			# print(new_color)
+			self.anime_scatter.set_facecolor(new_color)
+		return self.anime_scatter,
 

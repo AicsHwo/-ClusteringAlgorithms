@@ -80,10 +80,7 @@ def shuffle(datapoints):
 	'''
 	assume datapoints is of shape k x N x D
 	'''
-	assert(len(datapoints.shape) == 3)
-	k, N, D = datapoints.shape
 	new_datapoints = np.copy(datapoints)
-	new_datapoints = new_datapoints.reshape((k*N, D))
-	# print(datapoints)
+	new_datapoints = np.concatenate(new_datapoints)
 	np.random.shuffle(new_datapoints)
 	return new_datapoints
